@@ -15,7 +15,7 @@ function tag(xml,name) {
 }
 function parseFeed(xml) {
  const items=[];
- for(const match of xml.matchAll(new RegExp("<item[^>]*>([\\\\s\\\\S]*?)</item>","gi"))){
+ for(const match of xml.matchAll(/<item[^>]*>([\\s\\S]*?)<\\/item>/gi)){
   const item=match[1],title=tag(item,"title"),url=tag(item,"link"),date=tag(item,"pubDate");
   const publisher=tag(item,"source")||"Google News";
   if(title&&url)items.push({title,url,publisher,publishedAt:date&&!isNaN(Date.parse(date))?new Date(date).toISOString():null});
@@ -32,7 +32,7 @@ export default {
   const name=(url.searchParams.get("name")||"").trim().slice(0,90);
   const symbol=(url.searchParams.get("symbol")||"").trim().slice(0,30);
   if(!name)return json({error:"Unternehmensname fehlt."},400,origin);
-  const cacheKey=new Request("https://rss-cache.local/"+encodeURIComponent((symbol||name).toUpperCase()));
+  const cacheKey=new Request("https://rss-cache-v2.local/"+encodeURIComponent((symbol||name).toUpperCase()));
   const cache=caches.default,cached=await cache.match(cacheKey);
   if(cached)return new Response(cached.body,{headers:{...Object.fromEntries(cached.headers),...cors(origin)}});
   const query='"'+name.replace(/"/g," ")+'" when:7d';
