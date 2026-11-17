@@ -31,9 +31,16 @@ export default {
     if(origin!==ALLOWED_ORIGIN)return json({error:"Origin not allowed",receivedOrigin:origin||"(none)"},403,origin);
     if(url.pathname!=="/api/news"||request.method!=="GET")return json({error:"Not found"},404,origin);
     const name=(url.searchParams.get("name")||"").trim().slice(0,90);
+    const symbol=(url.searchParams.get("symbol")||"").trim().slice(0,40);
     if(!name)return json({error:"Unternehmensname fehlt."},400,origin);
     try {
-      const query='"'+name.replace(/"/g," ")+'" when:7d';
+      // Search by company name AND ticker so international listings are easier to find.
+      const safeName=name.replace(/"/g," ");
+      const safeSymbol=symbol.replace(/"/g," ");
+      const searchTerm=safeSymbol&&safeSymbol.toLowerCase()!==safeName.toLowerCase()
+        ? '"'+safeName+'" OR "'+safeSymbol+'"'
+        : '"'+safeName+'"';
+      const query=searchTerm+' when:7d';
       const feeds=[
         "https://news.google.com/rss/search?q="+encodeURIComponent(query)+"&hl=de&gl=DE&ceid=DE:de",
         "https://news.google.com/rss/search?q="+encodeURIComponent(query)+"&hl=en-US&gl=US&ceid=US:en"
